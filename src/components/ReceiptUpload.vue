@@ -165,18 +165,59 @@ function parseReceiptText(text) {
   return extractedItems.length > 0 ? extractedItems : []
 }
 
+async function enhanceImage(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        canvas.width = img.width
+        canvas.height = img.height
+        const ctx = canvas.getContext('2d')
+        
+        ctx.drawImage(img, 0, 0)
+        
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+        const data = imageData.data
+        
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i]
+          const g = data[i + 1]
+          const b = data[i + 2]
+          
+          const gray = r * 0.299 + g * 0.587 + b * 0.114
+          
+          data[i] = gray
+          data[i + 1] = gray
+          data[i + 2] = gray
+        }
+        
+        ctx.putImageData(imageData, 0, 0)
+        
+        canvas.toBlob(resolve, 'image/png')
+      }
+      img.src = e.target.result
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
 async function handleImageUpload(e) {
   const file = e.target.files?.[0]
   if (!file) return
 
   loading.value = true
-  loadingStatus.value = 'Initializing OCR...'
+  loadingStatus.value = 'Enhancing image...'
   
   try {
+    const enhancedFile = await enhanceImage(file)
+    
+    loadingStatus.value = 'Initializing OCR...'
     const worker = await createWorker('eng')
     
     loadingStatus.value = 'Reading receipt...'
-    const { data: { text } } = await worker.recognize(file)
+    const { data: { text } } = await worker.recognize(enhancedFile)
     
     await worker.terminate()
     
