@@ -123,10 +123,19 @@ function parseReceiptText(text) {
   const lines = text.split('\n').filter(line => line.trim())
   const extractedItems = []
   
+  const excludeKeywords = [
+    'TOTAL', 'BELANJA', 'TUNAI', 'KEMBALI', 'SUBTOTAL', 
+    'DISKON', 'PAJAK', 'TAX', 'CHANGE', 'PAYMENT', 'CASH',
+    'HARGA JUAL', 'PPN', 'LAYANAN', 'KONSUMEN', 'GRATIS',
+    'QR', 'INVOICE', 'STRUK', 'TERIMA', 'KASIH'
+  ]
+  
   for (const line of lines) {
-    const trimmed = line.trim()
+    const trimmed = line.trim().toUpperCase()
     
     if (trimmed.length < 3) continue
+    
+    if (excludeKeywords.some(keyword => trimmed.includes(keyword))) continue
     
     const numbers = trimmed.match(/\d+[.,]\d+|\d+/g) || []
     
@@ -134,14 +143,16 @@ function parseReceiptText(text) {
       const lastNumber = numbers[numbers.length - 1]
       const amount = parseFloat(lastNumber.replace(',', '.'))
       
-      if (amount > 0 && amount < 100000) {
-        const description = trimmed
+      if (amount > 100 && amount < 100000) {
+        const originalLine = line.trim()
+        const description = originalLine
           .replace(/\d+[.,]\d+/g, '')
           .replace(/\d+/g, '')
+          .replace(/[|[\]()]/g, ' ')
           .replace(/\s+/g, ' ')
           .trim()
         
-        if (description.length > 2) {
+        if (description.length > 3 && !description.match(/^[\s\-\*\.]+$/)) {
           extractedItems.push({
             description,
             amount,
