@@ -58,6 +58,7 @@ const mobileMenuOpen = ref(false)
 const navLinks = [
   { path: '/', label: 'Dashboard' },
   { path: '/transactions', label: 'Transactions' },
+  { path: '/receipt', label: 'Receipt Scanner' },
   { path: '/locations', label: 'Locations' },
   { path: '/categories', label: 'Categories' },
   { path: '/comparison', label: 'Comparison' }
