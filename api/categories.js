@@ -1,9 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.VITE_SUPABASE_ANON_KEY
-)
+import { query } from './db.js'
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', 'true')
@@ -21,32 +16,18 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name')
-
-      if (error) throw error
-      res.status(200).json(data)
+      const result = await query('SELECT * FROM categories ORDER BY name')
+      res.status(200).json(result.rows)
     } else if (req.method === 'POST') {
       const { name, color } = req.body
-
-      const { data, error } = await supabase
-        .from('categories')
-        .insert([{ name, color }])
-        .select()
-
-      if (error) throw error
-      res.status(201).json(data[0])
+      const result = await query(
+        'INSERT INTO categories (name, color) VALUES ($1, $2) RETURNING *',
+        [name, color || '#3B82F6']
+      )
+      res.status(201).json(result.rows[0])
     } else if (req.method === 'DELETE') {
       const { id } = req.body
-
-      const { error } = await supabase
-        .from('categories')
-        .delete()
-        .eq('id', id)
-
-      if (error) throw error
+      await query('DELETE FROM categories WHERE id = $1', [id])
       res.status(204).end()
     } else {
       res.status(405).json({ error: 'Method not allowed' })

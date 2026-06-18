@@ -1,9 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.VITE_SUPABASE_ANON_KEY
-)
+import { query } from './db.js'
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', 'true')
@@ -21,43 +16,25 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const { data, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .order('date', { ascending: false })
-
-      if (error) throw error
-      res.status(200).json(data)
+      const result = await query('SELECT * FROM transactions ORDER BY date DESC')
+      res.status(200).json(result.rows)
     } else if (req.method === 'POST') {
       const { location_id, category_id, amount, description, date } = req.body
-
-      const { data, error } = await supabase
-        .from('transactions')
-        .insert([{ location_id, category_id, amount, description, date }])
-        .select()
-
-      if (error) throw error
-      res.status(201).json(data[0])
+      const result = await query(
+        'INSERT INTO transactions (location_id, category_id, amount, description, date) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+        [location_id, category_id, amount, description, date]
+      )
+      res.status(201).json(result.rows[0])
     } else if (req.method === 'PUT') {
       const { id, location_id, category_id, amount, description, date } = req.body
-
-      const { data, error } = await supabase
-        .from('transactions')
-        .update({ location_id, category_id, amount, description, date })
-        .eq('id', id)
-        .select()
-
-      if (error) throw error
-      res.status(200).json(data[0])
+      const result = await query(
+        'UPDATE transactions SET location_id = $1, category_id = $2, amount = $3, description = $4, date = $5, updated_at = NOW() WHERE id = $6 RETURNING *',
+        [location_id, category_id, amount, description, date, id]
+      )
+      res.status(200).json(result.rows[0])
     } else if (req.method === 'DELETE') {
       const { id } = req.body
-
-      const { error } = await supabase
-        .from('transactions')
-        .delete()
-        .eq('id', id)
-
-      if (error) throw error
+      await query('DELETE FROM transactions WHERE id = $1', [id])
       res.status(204).end()
     } else {
       res.status(405).json({ error: 'Method not allowed' })

@@ -4,7 +4,6 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "env": {
-    "VITE_SUPABASE_URL": "@VITE_SUPABASE_URL",
-    "VITE_SUPABASE_ANON_KEY": "@VITE_SUPABASE_ANON_KEY"
+    "DATABASE_URL": "@DATABASE_URL"
   }
 }

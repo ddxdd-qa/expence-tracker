@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { supabase } from '../lib/supabase'
+import axios from 'axios'
 
 export const useTransactionStore = defineStore('transactions', () => {
   const transactions = ref([])
@@ -48,12 +48,8 @@ export const useTransactionStore = defineStore('transactions', () => {
     loading.value = true
     error.value = null
     try {
-      const { data, error: err } = await supabase
-        .from('transactions')
-        .select('*')
-        .order('date', { ascending: false })
-      if (err) throw err
-      transactions.value = data || []
+      const response = await axios.get('/api/transactions')
+      transactions.value = response.data || []
     } catch (e) {
       error.value = e.message
     } finally {
@@ -63,12 +59,8 @@ export const useTransactionStore = defineStore('transactions', () => {
 
   async function fetchLocations() {
     try {
-      const { data, error: err } = await supabase
-        .from('locations')
-        .select('*')
-        .order('name')
-      if (err) throw err
-      locations.value = data || []
+      const response = await axios.get('/api/locations')
+      locations.value = response.data || []
     } catch (e) {
       error.value = e.message
     }
@@ -76,12 +68,8 @@ export const useTransactionStore = defineStore('transactions', () => {
 
   async function fetchCategories() {
     try {
-      const { data, error: err } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name')
-      if (err) throw err
-      categories.value = data || []
+      const response = await axios.get('/api/categories')
+      categories.value = response.data || []
     } catch (e) {
       error.value = e.message
     }
@@ -89,13 +77,9 @@ export const useTransactionStore = defineStore('transactions', () => {
 
   async function addTransaction(transaction) {
     try {
-      const { data, error: err } = await supabase
-        .from('transactions')
-        .insert([transaction])
-        .select()
-      if (err) throw err
-      transactions.value.unshift(data[0])
-      return data[0]
+      const response = await axios.post('/api/transactions', transaction)
+      transactions.value.unshift(response.data)
+      return response.data
     } catch (e) {
       error.value = e.message
       throw e
@@ -104,17 +88,12 @@ export const useTransactionStore = defineStore('transactions', () => {
 
   async function updateTransaction(id, updates) {
     try {
-      const { data, error: err } = await supabase
-        .from('transactions')
-        .update(updates)
-        .eq('id', id)
-        .select()
-      if (err) throw err
+      const response = await axios.put('/api/transactions', { id, ...updates })
       const idx = transactions.value.findIndex(t => t.id === id)
       if (idx >= 0) {
-        transactions.value[idx] = data[0]
+        transactions.value[idx] = response.data
       }
-      return data[0]
+      return response.data
     } catch (e) {
       error.value = e.message
       throw e
@@ -123,11 +102,7 @@ export const useTransactionStore = defineStore('transactions', () => {
 
   async function deleteTransaction(id) {
     try {
-      const { error: err } = await supabase
-        .from('transactions')
-        .delete()
-        .eq('id', id)
-      if (err) throw err
+      await axios.delete('/api/transactions', { data: { id } })
       transactions.value = transactions.value.filter(t => t.id !== id)
     } catch (e) {
       error.value = e.message
@@ -137,13 +112,9 @@ export const useTransactionStore = defineStore('transactions', () => {
 
   async function addLocation(location) {
     try {
-      const { data, error: err } = await supabase
-        .from('locations')
-        .insert([location])
-        .select()
-      if (err) throw err
-      locations.value.push(data[0])
-      return data[0]
+      const response = await axios.post('/api/locations', location)
+      locations.value.push(response.data)
+      return response.data
     } catch (e) {
       error.value = e.message
       throw e
@@ -152,11 +123,7 @@ export const useTransactionStore = defineStore('transactions', () => {
 
   async function deleteLocation(id) {
     try {
-      const { error: err } = await supabase
-        .from('locations')
-        .delete()
-        .eq('id', id)
-      if (err) throw err
+      await axios.delete('/api/locations', { data: { id } })
       locations.value = locations.value.filter(l => l.id !== id)
     } catch (e) {
       error.value = e.message
@@ -166,13 +133,9 @@ export const useTransactionStore = defineStore('transactions', () => {
 
   async function addCategory(category) {
     try {
-      const { data, error: err } = await supabase
-        .from('categories')
-        .insert([category])
-        .select()
-      if (err) throw err
-      categories.value.push(data[0])
-      return data[0]
+      const response = await axios.post('/api/categories', category)
+      categories.value.push(response.data)
+      return response.data
     } catch (e) {
       error.value = e.message
       throw e
@@ -181,11 +144,7 @@ export const useTransactionStore = defineStore('transactions', () => {
 
   async function deleteCategory(id) {
     try {
-      const { error: err } = await supabase
-        .from('categories')
-        .delete()
-        .eq('id', id)
-      if (err) throw err
+      await axios.delete('/api/categories', { data: { id } })
       categories.value = categories.value.filter(c => c.id !== id)
     } catch (e) {
       error.value = e.message
