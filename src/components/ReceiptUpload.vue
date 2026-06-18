@@ -75,7 +75,20 @@
             </option>
           </select>
         </div>
+        <button
+          @click="deleteItem(idx)"
+          class="mt-4 px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+        >
+          Delete Item
+        </button>
       </div>
+
+      <button
+        @click="addItem"
+        class="mb-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+      >
+        + Add Item Manually
+      </button>
 
       <div class="flex gap-2 mt-6">
         <button
@@ -255,6 +268,19 @@ async function saveItems() {
   } catch (error) {
     alert('Error saving transactions: ' + error.message)
   }
+}
+
+function deleteItem(idx) {
+  items.value.splice(idx, 1)
+}
+
+function addItem() {
+  items.value.push({
+    description: '',
+    amount: 0,
+    category_id: null,
+    location_id: null
+  })
 }
 
 function resetForm() {
