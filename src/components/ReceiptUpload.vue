@@ -124,40 +124,31 @@ function parseReceiptText(text) {
   const extractedItems = []
   
   for (const line of lines) {
-    const match = line.match(/(.+?)\s+(\d+\.?\d*)\s*$/)
-    if (match) {
-      const description = match[1].trim()
-      const amount = parseFloat(match[2])
+    const trimmed = line.trim()
+    
+    if (trimmed.length < 3) continue
+    
+    const numbers = trimmed.match(/\d+[.,]\d+|\d+/g) || []
+    
+    if (numbers.length >= 1) {
+      const lastNumber = numbers[numbers.length - 1]
+      const amount = parseFloat(lastNumber.replace(',', '.'))
       
-      if (amount > 0 && description.length > 2) {
-        extractedItems.push({
-          description,
-          amount,
-          category_id: null,
-          location_id: null
-        })
-      }
-    }
-  }
-  
-  return extractedItems.length > 0 ? extractedItems : parseSimpleFormat(text)
-}
-
-function parseSimpleFormat(text) {
-  const lines = text.split('\n').filter(line => line.trim())
-  const extractedItems = []
-  
-  for (const line of lines) {
-    const numbers = line.match(/\d+\.?\d*/g)
-    if (numbers?.length > 0) {
-      const amount = parseFloat(numbers[numbers.length - 1])
-      if (amount > 0 && amount < 10000) {
-        extractedItems.push({
-          description: line.replace(/\d+\.?\d*/g, '').trim() || 'Item',
-          amount,
-          category_id: null,
-          location_id: null
-        })
+      if (amount > 0 && amount < 100000) {
+        const description = trimmed
+          .replace(/\d+[.,]\d+/g, '')
+          .replace(/\d+/g, '')
+          .replace(/\s+/g, ' ')
+          .trim()
+        
+        if (description.length > 2) {
+          extractedItems.push({
+            description,
+            amount,
+            category_id: null,
+            location_id: null
+          })
+        }
       }
     }
   }
