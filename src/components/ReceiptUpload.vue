@@ -13,7 +13,10 @@
     </div>
 
     <div v-if="loading" class="text-center py-8">
-      <p class="text-gray-600">Processing receipt...</p>
+      <p class="text-gray-600 mb-2">{{ loadingStatus }}</p>
+      <div class="inline-block">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
     </div>
 
     <div v-else-if="items.length > 0" class="space-y-4">
@@ -96,10 +99,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useTransactionStore } from '../stores/transactionStore'
-import axios from 'axios'
+import { createWorker } from 'tesseract.js'
 
 const store = useTransactionStore()
 const loading = ref(false)
+const loadingStatus = ref('')
 const items = ref([])
 const locations = ref([])
 const categories = ref([])
@@ -115,26 +119,80 @@ onMounted(async () => {
   categories.value = store.categories
 })
 
+function parseReceiptText(text) {
+  const lines = text.split('\n').filter(line => line.trim())
+  const extractedItems = []
+  
+  for (const line of lines) {
+    const match = line.match(/(.+?)\s+(\d+\.?\d*)\s*$/)
+    if (match) {
+      const description = match[1].trim()
+      const amount = parseFloat(match[2])
+      
+      if (amount > 0 && description.length > 2) {
+        extractedItems.push({
+          description,
+          amount,
+          category_id: null,
+          location_id: null
+        })
+      }
+    }
+  }
+  
+  return extractedItems.length > 0 ? extractedItems : parseSimpleFormat(text)
+}
+
+function parseSimpleFormat(text) {
+  const lines = text.split('\n').filter(line => line.trim())
+  const extractedItems = []
+  
+  for (const line of lines) {
+    const numbers = line.match(/\d+\.?\d*/g)
+    if (numbers?.length > 0) {
+      const amount = parseFloat(numbers[numbers.length - 1])
+      if (amount > 0 && amount < 10000) {
+        extractedItems.push({
+          description: line.replace(/\d+\.?\d*/g, '').trim() || 'Item',
+          amount,
+          category_id: null,
+          location_id: null
+        })
+      }
+    }
+  }
+  
+  return extractedItems
+}
+
 async function handleImageUpload(e) {
   const file = e.target.files?.[0]
   if (!file) return
 
   loading.value = true
+  loadingStatus.value = 'Initializing OCR...'
+  
   try {
-    const reader = new FileReader()
-    reader.onload = async (event) => {
-      const base64 = event.target?.result?.split(',')[1]
-      if (!base64) return
-
-      const response = await axios.post('/api/receipt', {
-        imageBuffer: base64
-      })
-
-      items.value = response.data.items
+    const worker = await createWorker('eng')
+    
+    loadingStatus.value = 'Reading receipt...'
+    const { data: { text } } = await worker.recognize(file)
+    
+    await worker.terminate()
+    
+    const extractedItems = parseReceiptText(text)
+    
+    if (extractedItems.length === 0) {
+      alert('No items found in receipt. Try a clearer photo.')
+      return
     }
-    reader.readAsDataURL(file)
+    
+    items.value = extractedItems
+    loadingStatus.value = ''
   } catch (error) {
+    console.error('OCR Error:', error)
     alert('Error processing receipt: ' + error.message)
+    loadingStatus.value = ''
   } finally {
     loading.value = false
   }
