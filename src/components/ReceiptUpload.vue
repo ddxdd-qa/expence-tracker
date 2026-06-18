@@ -123,48 +123,46 @@ function parseReceiptText(text) {
   const lines = text.split('\n').filter(line => line.trim())
   const extractedItems = []
   
-  const excludeKeywords = [
-    'TOTAL', 'BELANJA', 'TUNAI', 'KEMBALI', 'SUBTOTAL', 
-    'DISKON', 'PAJAK', 'TAX', 'CHANGE', 'PAYMENT', 'CASH',
-    'HARGA JUAL', 'PPN', 'LAYANAN', 'KONSUMEN', 'GRATIS',
-    'QR', 'INVOICE', 'STRUK', 'TERIMA', 'KASIH'
+  const excludePatterns = [
+    /TOTAL/i, /BELANJA/i, /TUNAI/i, /KEMBALI/i, /SUBTOTAL/i,
+    /DISKON/i, /PAJAK/i, /TAX/i, /CHANGE/i, /PAYMENT/i,
+    /HARGA JUAL/i, /PPN/i, /LAYANAN/i, /KONSUMEN/i, /GRATIS/i,
+    /STRUK/i, /TERIMA/i, /KASIH/i, /INVOICE/i, /NO\s*HP/i,
+    /^-+$/, /^\*+$/, /^\.+$/
   ]
   
   for (const line of lines) {
-    const trimmed = line.trim().toUpperCase()
+    const trimmed = line.trim()
     
     if (trimmed.length < 3) continue
-    
-    if (excludeKeywords.some(keyword => trimmed.includes(keyword))) continue
+    if (excludePatterns.some(pattern => pattern.test(trimmed))) continue
     
     const numbers = trimmed.match(/\d+[.,]\d+|\d+/g) || []
+    if (numbers.length === 0) continue
     
-    if (numbers.length >= 1) {
-      const lastNumber = numbers[numbers.length - 1]
-      const amount = parseFloat(lastNumber.replace(',', '.'))
-      
-      if (amount > 100 && amount < 100000) {
-        const originalLine = line.trim()
-        const description = originalLine
-          .replace(/\d+[.,]\d+/g, '')
-          .replace(/\d+/g, '')
-          .replace(/[|[\]()]/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim()
-        
-        if (description.length > 3 && !description.match(/^[\s\-\*\.]+$/)) {
-          extractedItems.push({
-            description,
-            amount,
-            category_id: null,
-            location_id: null
-          })
-        }
-      }
+    const lastNumber = numbers[numbers.length - 1]
+    const amount = parseFloat(lastNumber.replace(',', '.'))
+    
+    if (amount < 50 || amount > 999999) continue
+    
+    let description = trimmed
+      .replace(/\d+[.,]\d+/g, '')
+      .replace(/\d+/g, '')
+      .replace(/[|[\]()]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+    
+    if (description.length > 2 && !description.match(/^[-*\.]{2,}$/)) {
+      extractedItems.push({
+        description,
+        amount,
+        category_id: null,
+        location_id: null
+      })
     }
   }
   
-  return extractedItems
+  return extractedItems.length > 0 ? extractedItems : []
 }
 
 async function handleImageUpload(e) {
