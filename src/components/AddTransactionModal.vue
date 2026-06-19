@@ -2,7 +2,7 @@
   <div class="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-4">
     <div class="bg-white rounded-t-lg sm:rounded-lg shadow-xl p-4 sm:p-6 w-full sm:max-w-md">
       <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Add Transaction</h2>
-      <form @submit.prevent="submit" class="space-y-3 sm:space-y-4 max-h-[70vh] sm:max-h-none overflow-y-auto">
+      <form @submit.prevent="submit" class="space-y-3 sm:space-y-4 max-h-[70vh] sm:max-h-none overflow-y-auto overflow-x-visible">
         <div>
           <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Date</label>
           <input
@@ -25,7 +25,7 @@
               class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
               required
             />
-            <div v-if="locationInput && filteredLocations.length > 0" class="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg mt-1 z-10 max-h-40 overflow-y-auto">
+            <div v-if="locationInput && filteredLocations.length > 0" class="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg mt-1 z-50 max-h-40 overflow-y-auto pointer-events-auto shadow-lg">
               <div
                 v-for="loc in filteredLocations"
                 :key="loc.id"
@@ -56,7 +56,7 @@
               class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
               required
             />
-            <div v-if="categoryInput && filteredCategories.length > 0" class="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg mt-1 z-10 max-h-40 overflow-y-auto">
+            <div v-if="categoryInput && filteredCategories.length > 0" class="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg mt-1 z-50 max-h-40 overflow-y-auto pointer-events-auto shadow-lg">
               <div
                 v-for="cat in filteredCategories"
                 :key="cat.id"
