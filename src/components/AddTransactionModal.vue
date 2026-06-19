@@ -16,14 +16,13 @@
         <div>
           <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Location</label>
           <div class="relative">
-            <input
+             <input
               v-model="locationInput"
               @input="filterLocations"
               @keydown.enter="selectOrCreateLocation"
               type="text"
               placeholder="Type location..."
               class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
-              required
             />
             <div v-if="locationInput && filteredLocations.length > 0" class="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg mt-1 z-50 max-h-40 overflow-y-auto pointer-events-auto shadow-lg">
               <div
@@ -47,14 +46,13 @@
         <div>
           <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Category</label>
           <div class="relative">
-            <input
+             <input
               v-model="categoryInput"
               @input="filterCategories"
               @keydown.enter="selectOrCreateCategory"
               type="text"
               placeholder="Type category..."
               class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
-              required
             />
             <div v-if="categoryInput && filteredCategories.length > 0" class="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg mt-1 z-50 max-h-40 overflow-y-auto pointer-events-auto shadow-lg">
               <div
@@ -165,12 +163,12 @@ function filterCategories() {
 
 function selectLocation(loc) {
   form.value.location_id = loc.id
-  locationInput.value = ''
+  locationInput.value = loc.name
 }
 
 function selectCategory(cat) {
   form.value.category_id = cat.id
-  categoryInput.value = ''
+  categoryInput.value = cat.name
 }
 
 async function selectOrCreateLocation() {
