@@ -29,13 +29,13 @@
               <div
                 v-for="loc in filteredLocations"
                 :key="loc.id"
-                @click="form.location_id = loc.id; locationInput = loc.name"
+                @mousedown.prevent="form.location_id = loc.id; locationInput = loc.name; locationInput = ''"
                 class="px-3 sm:px-4 py-2 hover:bg-blue-100 cursor-pointer text-sm"
               >
                 {{ loc.name }}
               </div>
               <div
-                @click="selectOrCreateLocation"
+                @mousedown.prevent="selectOrCreateLocation"
                 class="px-3 sm:px-4 py-2 bg-green-50 hover:bg-green-100 cursor-pointer text-sm border-t border-gray-200 text-green-700 font-medium"
               >
                 + Create: {{ locationInput }}
@@ -60,13 +60,13 @@
               <div
                 v-for="cat in filteredCategories"
                 :key="cat.id"
-                @click="form.category_id = cat.id; categoryInput = cat.name"
+                @mousedown.prevent="form.category_id = cat.id; categoryInput = cat.name; categoryInput = ''"
                 class="px-3 sm:px-4 py-2 hover:bg-blue-100 cursor-pointer text-sm"
               >
                 {{ cat.name }}
               </div>
               <div
-                @click="selectOrCreateCategory"
+                @mousedown.prevent="selectOrCreateCategory"
                 class="px-3 sm:px-4 py-2 bg-green-50 hover:bg-green-100 cursor-pointer text-sm border-t border-gray-200 text-green-700 font-medium"
               >
                 + Create: {{ categoryInput }}
