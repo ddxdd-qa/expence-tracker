@@ -29,7 +29,7 @@
               <div
                 v-for="loc in filteredLocations"
                 :key="loc.id"
-                @mousedown.prevent="form.location_id = loc.id; locationInput = loc.name; locationInput = ''"
+                @mousedown.prevent="selectLocation(loc)"
                 class="px-3 sm:px-4 py-2 hover:bg-blue-100 cursor-pointer text-sm"
               >
                 {{ loc.name }}
@@ -60,7 +60,7 @@
               <div
                 v-for="cat in filteredCategories"
                 :key="cat.id"
-                @mousedown.prevent="form.category_id = cat.id; categoryInput = cat.name; categoryInput = ''"
+                @mousedown.prevent="selectCategory(cat)"
                 class="px-3 sm:px-4 py-2 hover:bg-blue-100 cursor-pointer text-sm"
               >
                 {{ cat.name }}
@@ -161,6 +161,16 @@ function filterCategories() {
   if (filteredCategories.value.length === 0 && categoryInput.value.length > 0) {
     form.value.category_id = null
   }
+}
+
+function selectLocation(loc) {
+  form.value.location_id = loc.id
+  locationInput.value = ''
+}
+
+function selectCategory(cat) {
+  form.value.category_id = cat.id
+  categoryInput.value = ''
 }
 
 async function selectOrCreateLocation() {
