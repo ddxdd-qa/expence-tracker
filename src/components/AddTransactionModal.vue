@@ -15,30 +15,64 @@
 
         <div>
           <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Location</label>
-          <select
-            v-model.number="form.location_id"
-            class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
-            required
-          >
-            <option value="">Select location</option>
-            <option v-for="loc in store.locations" :key="loc.id" :value="loc.id">
-              {{ loc.name }}
-            </option>
-          </select>
+          <div class="relative">
+            <input
+              v-model="locationInput"
+              @input="filterLocations"
+              @keydown.enter="selectOrCreateLocation"
+              type="text"
+              placeholder="Type location..."
+              class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+              required
+            />
+            <div v-if="locationInput && filteredLocations.length > 0" class="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg mt-1 z-10 max-h-40 overflow-y-auto">
+              <div
+                v-for="loc in filteredLocations"
+                :key="loc.id"
+                @click="form.location_id = loc.id; locationInput = loc.name"
+                class="px-3 sm:px-4 py-2 hover:bg-blue-100 cursor-pointer text-sm"
+              >
+                {{ loc.name }}
+              </div>
+              <div
+                @click="selectOrCreateLocation"
+                class="px-3 sm:px-4 py-2 bg-green-50 hover:bg-green-100 cursor-pointer text-sm border-t border-gray-200 text-green-700 font-medium"
+              >
+                + Create: {{ locationInput }}
+              </div>
+            </div>
+          </div>
         </div>
 
         <div>
           <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Category</label>
-          <select
-            v-model.number="form.category_id"
-            class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
-            required
-          >
-            <option value="">Select category</option>
-            <option v-for="cat in store.categories" :key="cat.id" :value="cat.id">
-              {{ cat.name }}
-            </option>
-          </select>
+          <div class="relative">
+            <input
+              v-model="categoryInput"
+              @input="filterCategories"
+              @keydown.enter="selectOrCreateCategory"
+              type="text"
+              placeholder="Type category..."
+              class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+              required
+            />
+            <div v-if="categoryInput && filteredCategories.length > 0" class="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg mt-1 z-10 max-h-40 overflow-y-auto">
+              <div
+                v-for="cat in filteredCategories"
+                :key="cat.id"
+                @click="form.category_id = cat.id; categoryInput = cat.name"
+                class="px-3 sm:px-4 py-2 hover:bg-blue-100 cursor-pointer text-sm"
+              >
+                {{ cat.name }}
+              </div>
+              <div
+                @click="selectOrCreateCategory"
+                class="px-3 sm:px-4 py-2 bg-green-50 hover:bg-green-100 cursor-pointer text-sm border-t border-gray-200 text-green-700 font-medium"
+              >
+                + Create: {{ categoryInput }}
+              </div>
+            </div>
+          </div>
         </div>
 
         <div>
@@ -85,13 +119,16 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useTransactionStore } from '../stores/transactionStore'
 
 const store = useTransactionStore()
 const emit = defineEmits(['close', 'added'])
 
 const today = new Date().toISOString().split('T')[0]
+const locationInput = ref('')
+const categoryInput = ref('')
+
 const form = ref({
   date: today,
   location_id: null,
@@ -99,6 +136,62 @@ const form = ref({
   description: '',
   amount: null
 })
+
+const filteredLocations = computed(() => {
+  if (!locationInput.value) return store.locations
+  return store.locations.filter(loc =>
+    loc.name.toLowerCase().includes(locationInput.value.toLowerCase())
+  )
+})
+
+const filteredCategories = computed(() => {
+  if (!categoryInput.value) return store.categories
+  return store.categories.filter(cat =>
+    cat.name.toLowerCase().includes(categoryInput.value.toLowerCase())
+  )
+})
+
+function filterLocations() {
+  if (filteredLocations.value.length === 0 && locationInput.value.length > 0) {
+    form.value.location_id = null
+  }
+}
+
+function filterCategories() {
+  if (filteredCategories.value.length === 0 && categoryInput.value.length > 0) {
+    form.value.category_id = null
+  }
+}
+
+async function selectOrCreateLocation() {
+  if (!locationInput.value.trim()) return
+  
+  const existing = store.locations.find(l =>
+    l.name.toLowerCase() === locationInput.value.toLowerCase()
+  )
+  
+  if (existing) {
+    form.value.location_id = existing.id
+  } else {
+    const newLoc = await store.addLocation({ name: locationInput.value })
+    form.value.location_id = newLoc.id
+  }
+}
+
+async function selectOrCreateCategory() {
+  if (!categoryInput.value.trim()) return
+  
+  const existing = store.categories.find(c =>
+    c.name.toLowerCase() === categoryInput.value.toLowerCase()
+  )
+  
+  if (existing) {
+    form.value.category_id = existing.id
+  } else {
+    const newCat = await store.addCategory({ name: categoryInput.value })
+    form.value.category_id = newCat.id
+  }
+}
 
 async function submit() {
   if (!form.value.location_id || !form.value.category_id || !form.value.amount) {
