@@ -124,25 +124,11 @@ export const useTransactionStore = defineStore('transactions', () => {
     }
   }
 
-  async function persistBalance(acc) {
-    await axios.put('/api/accounts', { id: acc.id, name: acc.name, type: acc.type, balance: Number(acc.balance) })
-  }
-
   async function addTransaction(transaction) {
     try {
       const response = await axios.post('/api/transactions', transaction)
       const newTx = { ...response.data, amount: Number(response.data.amount) }
       transactions.value.unshift(newTx)
-      
-      // Auto-update account balance if account_id is present
-      if (newTx.account_id) {
-        const acc = accounts.value.find(a => a.id === newTx.account_id)
-        if (acc) {
-          acc.balance = Number(acc.balance) + (newTx.type === 'income' ? newTx.amount : -newTx.amount)
-          await persistBalance(acc)
-        }
-      }
-
       return newTx
     } catch (e) {
       error.value = e.message
@@ -152,35 +138,10 @@ export const useTransactionStore = defineStore('transactions', () => {
 
   async function updateTransaction(id, updates) {
     try {
-      // Find old transaction to calculate balance difference
-      const oldTx = transactions.value.find(t => t.id === id)
-      const oldAmount = oldTx ? Number(oldTx.amount) : 0
-      const oldAccountId = oldTx ? oldTx.account_id : null
-      const oldType = oldTx ? oldTx.type : 'expense'
-
       const response = await axios.put('/api/transactions', { id, ...updates })
       const updatedTx = { ...response.data, amount: Number(response.data.amount) }
       const idx = transactions.value.findIndex(t => t.id === id)
-      if (idx >= 0) {
-        transactions.value[idx] = updatedTx
-      }
-
-      // Reverse old effect, apply new effect
-      if (oldAccountId) {
-        const oldAcc = accounts.value.find(a => a.id === oldAccountId)
-        if (oldAcc) {
-          oldAcc.balance = Number(oldAcc.balance) + (oldType === 'income' ? -oldAmount : oldAmount)
-          await persistBalance(oldAcc)
-        }
-      }
-      if (updatedTx.account_id) {
-        const newAcc = accounts.value.find(a => a.id === updatedTx.account_id)
-        if (newAcc) {
-          newAcc.balance = Number(newAcc.balance) + (updatedTx.type === 'income' ? updatedTx.amount : -updatedTx.amount)
-          if (newAcc.id !== oldAccountId) await persistBalance(newAcc)
-        }
-      }
-
+      if (idx >= 0) transactions.value[idx] = updatedTx
       return updatedTx
     } catch (e) {
       error.value = e.message
@@ -190,18 +151,8 @@ export const useTransactionStore = defineStore('transactions', () => {
 
   async function deleteTransaction(id) {
     try {
-      const oldTx = transactions.value.find(t => t.id === id)
       await axios.delete('/api/transactions', { data: { id } })
       transactions.value = transactions.value.filter(t => t.id !== id)
-
-      // Revert account balance
-      if (oldTx && oldTx.account_id) {
-        const acc = accounts.value.find(a => a.id === oldTx.account_id)
-        if (acc) {
-          acc.balance = Number(acc.balance) + (oldTx.type === 'income' ? -Number(oldTx.amount) : Number(oldTx.amount))
-          await persistBalance(acc)
-        }
-      }
     } catch (e) {
       error.value = e.message
       throw e
