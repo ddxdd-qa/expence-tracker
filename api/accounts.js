@@ -16,31 +16,25 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const result = await query('SELECT * FROM categories ORDER BY name')
+      const result = await query('SELECT * FROM accounts ORDER BY name')
       res.status(200).json(result.rows)
     } else if (req.method === 'POST') {
-      const { name, color, type } = req.body
-      const catType = type === 'expense' || type === 'income' ? type : null
+      const { name, type, balance } = req.body
       const result = await query(
-        'INSERT INTO categories (name, color, type) VALUES ($1, $2, $3) RETURNING *',
-        [name, color || '#3B82F6', catType]
+        'INSERT INTO accounts (name, type, balance) VALUES ($1, $2, $3) RETURNING *',
+        [name, type, balance || 0]
       )
       res.status(201).json(result.rows[0])
     } else if (req.method === 'PUT') {
-      const { id, name, color, type } = req.body
-      const catType = type === 'expense' || type === 'income' ? type : null
+      const { id, name, type, balance } = req.body
       const result = await query(
-        'UPDATE categories SET name = $1, color = $2, type = $3 WHERE id = $4 RETURNING *',
-        [name, color || '#3B82F6', catType, id]
+        'UPDATE accounts SET name = $1, type = $2, balance = $3 WHERE id = $4 RETURNING *',
+        [name, type, balance, id]
       )
       res.status(200).json(result.rows[0])
     } else if (req.method === 'DELETE') {
       const { id } = req.body
-      const check = await query('SELECT system_key FROM categories WHERE id = $1', [id])
-      if (check.rows.length > 0 && check.rows[0].system_key) {
-        return res.status(403).json({ error: 'Cannot delete system category' })
-      }
-      await query('DELETE FROM categories WHERE id = $1', [id])
+      await query('DELETE FROM accounts WHERE id = $1', [id])
       res.status(204).end()
     } else {
       res.status(405).json({ error: 'Method not allowed' })

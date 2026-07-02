@@ -25,6 +25,13 @@ export default async function handler(req, res) {
         [name]
       )
       res.status(201).json(result.rows[0])
+    } else if (req.method === 'PUT') {
+      const { id, name } = req.body
+      const result = await query(
+        'UPDATE locations SET name = $1 WHERE id = $2 RETURNING *',
+        [name, id]
+      )
+      res.status(200).json(result.rows[0])
     } else if (req.method === 'DELETE') {
       const { id } = req.body
       await query('DELETE FROM locations WHERE id = $1', [id])

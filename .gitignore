@@ -24,3 +24,10 @@ dist-ssr
 
 .DS_Store
 .vercel
+.agents/
+.clinerules/
+.cursor/
+.kiro/
+.windsurf/
+scratch/
+.env*

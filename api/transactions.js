@@ -19,17 +19,27 @@ export default async function handler(req, res) {
       const result = await query('SELECT * FROM transactions ORDER BY date DESC')
       res.status(200).json(result.rows)
     } else if (req.method === 'POST') {
-      const { location_id, category_id, amount, description, date } = req.body
+      const { location_id, category_id, amount, description, date, account_id, type } = req.body
+      if (amount < 0) {
+        res.status(400).json({ error: 'Amount cannot be negative' })
+        return
+      }
+      const txType = type === 'income' ? 'income' : 'expense'
       const result = await query(
-        'INSERT INTO transactions (location_id, category_id, amount, description, date) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [location_id, category_id, amount, description, date]
+        'INSERT INTO transactions (location_id, category_id, amount, description, date, account_id, type) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+        [location_id, category_id, amount, description, date, account_id || null, txType]
       )
       res.status(201).json(result.rows[0])
     } else if (req.method === 'PUT') {
-      const { id, location_id, category_id, amount, description, date } = req.body
+      const { id, location_id, category_id, amount, description, date, account_id, type } = req.body
+      if (amount < 0) {
+        res.status(400).json({ error: 'Amount cannot be negative' })
+        return
+      }
+      const txType = type === 'income' ? 'income' : 'expense'
       const result = await query(
-        'UPDATE transactions SET location_id = $1, category_id = $2, amount = $3, description = $4, date = $5, updated_at = NOW() WHERE id = $6 RETURNING *',
-        [location_id, category_id, amount, description, date, id]
+        'UPDATE transactions SET location_id = $1, category_id = $2, amount = $3, description = $4, date = $5, account_id = $6, type = $7, updated_at = NOW() WHERE id = $8 RETURNING *',
+        [location_id, category_id, amount, description, date, account_id || null, txType, id]
       )
       res.status(200).json(result.rows[0])
     } else if (req.method === 'DELETE') {

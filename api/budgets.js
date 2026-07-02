@@ -16,31 +16,30 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const result = await query('SELECT * FROM categories ORDER BY name')
+      const result = await query('SELECT * FROM budgets ORDER BY period DESC')
       res.status(200).json(result.rows)
     } else if (req.method === 'POST') {
-      const { name, color, type } = req.body
-      const catType = type === 'expense' || type === 'income' ? type : null
+      const { category_id, amount, period } = req.body
+      // Upsert budget on conflict
       const result = await query(
-        'INSERT INTO categories (name, color, type) VALUES ($1, $2, $3) RETURNING *',
-        [name, color || '#3B82F6', catType]
+        `INSERT INTO budgets (category_id, amount, period) 
+         VALUES ($1, $2, $3) 
+         ON CONFLICT (category_id, period) 
+         DO UPDATE SET amount = EXCLUDED.amount 
+         RETURNING *`,
+        [category_id, amount, period]
       )
       res.status(201).json(result.rows[0])
     } else if (req.method === 'PUT') {
-      const { id, name, color, type } = req.body
-      const catType = type === 'expense' || type === 'income' ? type : null
+      const { id, category_id, amount, period } = req.body
       const result = await query(
-        'UPDATE categories SET name = $1, color = $2, type = $3 WHERE id = $4 RETURNING *',
-        [name, color || '#3B82F6', catType, id]
+        `UPDATE budgets SET category_id = $1, amount = $2, period = $3 WHERE id = $4 RETURNING *`,
+        [category_id, amount, period, id]
       )
       res.status(200).json(result.rows[0])
     } else if (req.method === 'DELETE') {
       const { id } = req.body
-      const check = await query('SELECT system_key FROM categories WHERE id = $1', [id])
-      if (check.rows.length > 0 && check.rows[0].system_key) {
-        return res.status(403).json({ error: 'Cannot delete system category' })
-      }
-      await query('DELETE FROM categories WHERE id = $1', [id])
+      await query('DELETE FROM budgets WHERE id = $1', [id])
       res.status(204).end()
     } else {
       res.status(405).json({ error: 'Method not allowed' })
