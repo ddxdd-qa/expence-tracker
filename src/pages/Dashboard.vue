@@ -636,6 +636,16 @@
       </div>
     </div>
 
+    <!-- Monthly Spending Bar Chart -->
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 transition hover:shadow-md duration-300">
+      <h2 class="text-base sm:text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+        <span class="text-purple-500 font-extrabold">📊</span> Monthly Spending
+      </h2>
+      <div class="w-full min-h-[250px] flex items-center justify-center">
+        <MonthlyChart :data="store.groupedByMonth" />
+      </div>
+    </div>
+
     <AddTransactionModal v-if="showAddModal" @close="showAddModal = false" @added="showAddModal = false" />
     <TransferModal v-if="showTransferModal" @close="showTransferModal = false" @done="showTransferModal = false" />
   </div>

@@ -53,6 +53,24 @@ export const useTransactionStore = defineStore('transactions', () => {
     return grouped
   })
 
+  const groupedByMonth = computed(() => {
+    const grouped = {}
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+    expenseTransactions.value.forEach(t => {
+      const d = new Date(t.date)
+      const key = months[d.getMonth()] + ' ' + d.getFullYear()
+      grouped[key] = (grouped[key] || 0) + t.amount
+    })
+    const sorted = Object.keys(grouped).sort((a, b) => {
+      const [mA, yA] = a.split(' ')
+      const [mB, yB] = b.split(' ')
+      return yA - yB || months.indexOf(mA) - months.indexOf(mB)
+    })
+    const result = {}
+    sorted.forEach(k => { result[k] = grouped[k] })
+    return result
+  })
+
   async function fetchTransactions() {
     loading.value = true
     error.value = null
@@ -465,6 +483,7 @@ export const useTransactionStore = defineStore('transactions', () => {
     expenseTransactions,
     groupedByLocation,
     groupedByCategory,
+    groupedByMonth,
     fetchTransactions,
     fetchLocations,
     fetchCategories,
