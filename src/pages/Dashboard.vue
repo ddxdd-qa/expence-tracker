@@ -636,13 +636,13 @@
       </div>
     </div>
 
-    <!-- Monthly Spending Bar Chart -->
+    <!-- Daily Spending Line Chart -->
     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 transition hover:shadow-md duration-300">
       <h2 class="text-base sm:text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-        <span class="text-purple-500 font-extrabold">📊</span> Monthly Spending
+        <span class="text-purple-500 font-extrabold">📈</span> Daily Spending
       </h2>
       <div class="w-full min-h-[250px] flex items-center justify-center">
-        <MonthlyChart :data="store.groupedByMonth" />
+        <DailyTrendChart :data="store.groupedByDay" />
       </div>
     </div>
 
@@ -655,6 +655,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTransactionStore } from '../stores/transactionStore'
+import DailyTrendChart from '../components/DailyTrendChart.vue'
 import MonthlyChart from '../components/MonthlyChart.vue'
 import CategoryChart from '../components/CategoryChart.vue'
 import AddTransactionModal from '../components/AddTransactionModal.vue'
