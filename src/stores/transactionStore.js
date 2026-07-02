@@ -124,6 +124,10 @@ export const useTransactionStore = defineStore('transactions', () => {
     }
   }
 
+  async function persistBalance(acc) {
+    await axios.put('/api/accounts', { id: acc.id, name: acc.name, type: acc.type, balance: Number(acc.balance) })
+  }
+
   async function addTransaction(transaction) {
     try {
       const response = await axios.post('/api/transactions', transaction)
@@ -135,6 +139,7 @@ export const useTransactionStore = defineStore('transactions', () => {
         const acc = accounts.value.find(a => a.id === newTx.account_id)
         if (acc) {
           acc.balance = Number(acc.balance) + (newTx.type === 'income' ? newTx.amount : -newTx.amount)
+          await persistBalance(acc)
         }
       }
 
@@ -165,12 +170,14 @@ export const useTransactionStore = defineStore('transactions', () => {
         const oldAcc = accounts.value.find(a => a.id === oldAccountId)
         if (oldAcc) {
           oldAcc.balance = Number(oldAcc.balance) + (oldType === 'income' ? -oldAmount : oldAmount)
+          await persistBalance(oldAcc)
         }
       }
       if (updatedTx.account_id) {
         const newAcc = accounts.value.find(a => a.id === updatedTx.account_id)
         if (newAcc) {
           newAcc.balance = Number(newAcc.balance) + (updatedTx.type === 'income' ? updatedTx.amount : -updatedTx.amount)
+          if (newAcc.id !== oldAccountId) await persistBalance(newAcc)
         }
       }
 
@@ -192,6 +199,7 @@ export const useTransactionStore = defineStore('transactions', () => {
         const acc = accounts.value.find(a => a.id === oldTx.account_id)
         if (acc) {
           acc.balance = Number(acc.balance) + (oldTx.type === 'income' ? -Number(oldTx.amount) : Number(oldTx.amount))
+          await persistBalance(acc)
         }
       }
     } catch (e) {
