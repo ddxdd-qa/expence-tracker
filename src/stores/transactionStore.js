@@ -10,6 +10,7 @@ export const useTransactionStore = defineStore('transactions', () => {
   const budgets = ref([])
   const debts = ref([])
   const debtPayments = ref([])
+  const items = ref([])
 
   const dateFilter = ref({
     from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
@@ -32,7 +33,7 @@ export const useTransactionStore = defineStore('transactions', () => {
   const groupedByLocation = computed(() => {
     const grouped = {}
     expenseTransactions.value.forEach(t => {
-      const loc = locations.value.find(l => l.id === t.location_id)
+      const loc = locations.value.find(l => String(l.id) === String(t.location_id))
       const locName = loc?.name || 'Unknown'
       if (!grouped[locName]) grouped[locName] = 0
       grouped[locName] += t.amount
@@ -64,6 +65,36 @@ export const useTransactionStore = defineStore('transactions', () => {
     const result = {}
     sorted.forEach(k => { result[k] = grouped[k] })
     return result
+  })
+
+  const groupedByMonth = computed(() => {
+    const grouped = {}
+    filteredTransactions.value.forEach(t => {
+      const d = new Date(t.date)
+      const key = d.toLocaleDateString('en-US', { year: 'numeric', month: 'short' })
+      if (!grouped[key]) grouped[key] = { income: 0, expense: 0 }
+      if (t.type === 'income') {
+        grouped[key].income += t.amount
+      } else {
+        grouped[key].expense += t.amount
+      }
+    })
+    const sorted = Object.keys(grouped).sort((a, b) => new Date(a) - new Date(b))
+    const result = {}
+    sorted.forEach(k => { result[k] = grouped[k] })
+    return result
+  })
+
+  const groupedByHour = computed(() => {
+    const hours = Array.from({ length: 24 }, (_, i) => i)
+    const grouped = {}
+    hours.forEach(h => { grouped[h] = 0 })
+    expenseTransactions.value.forEach(t => {
+      if (!t.created_at) return
+      const h = new Date(t.created_at).getHours()
+      grouped[h] += t.amount
+    })
+    return grouped
   })
 
   async function fetchTransactions() {
@@ -121,6 +152,55 @@ export const useTransactionStore = defineStore('transactions', () => {
       }))
     } catch (e) {
       error.value = e.message
+    }
+  }
+
+  async function fetchItems() {
+    try {
+      const response = await axios.get('/api/items')
+      items.value = (response.data || []).map(i => ({
+        ...i,
+        location_id: i.location_id ? Number(i.location_id) : null,
+        qty: Number(i.qty),
+        price: Number(i.price)
+      }))
+    } catch (e) {
+      error.value = e.message
+    }
+  }
+
+  async function addItem(item) {
+    try {
+      const response = await axios.post('/api/items', item)
+      const newItem = { ...response.data, qty: Number(response.data.qty), price: Number(response.data.price) }
+      items.value.unshift(newItem)
+      return newItem
+    } catch (e) {
+      error.value = e.message
+      throw e
+    }
+  }
+
+  async function updateItem(id, updates) {
+    try {
+      const response = await axios.put('/api/items', { id, ...updates })
+      const updatedItem = { ...response.data, qty: Number(response.data.qty), price: Number(response.data.price) }
+      const idx = items.value.findIndex(i => i.id === id)
+      if (idx >= 0) items.value[idx] = updatedItem
+      return updatedItem
+    } catch (e) {
+      error.value = e.message
+      throw e
+    }
+  }
+
+  async function deleteItem(id) {
+    try {
+      await axios.delete('/api/items', { data: { id } })
+      items.value = items.value.filter(i => i.id !== id)
+    } catch (e) {
+      error.value = e.message
+      throw e
     }
   }
 
@@ -430,6 +510,7 @@ export const useTransactionStore = defineStore('transactions', () => {
     budgets,
     debts,
     debtPayments,
+    items,
     dateFilter,
     loading,
     error,
@@ -438,12 +519,18 @@ export const useTransactionStore = defineStore('transactions', () => {
     groupedByLocation,
     groupedByCategory,
     groupedByDay,
+    groupedByMonth,
+    groupedByHour,
     fetchTransactions,
     fetchLocations,
     fetchCategories,
     fetchAccounts,
     fetchBudgets,
     fetchDebts,
+    fetchItems,
+    addItem,
+    updateItem,
+    deleteItem,
     addTransaction,
     updateTransaction,
     deleteTransaction,

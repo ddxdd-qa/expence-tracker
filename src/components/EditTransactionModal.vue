@@ -112,6 +112,12 @@
           </div>
         </template>
 
+        <!-- Save as Item checkbox -->
+        <div v-if="txType === 'expense'" class="flex items-center gap-2 pt-2">
+          <input type="checkbox" id="saveAsItem" v-model="saveAsItem" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4" />
+          <label for="saveAsItem" class="text-sm font-semibold text-slate-600 cursor-pointer select-none">Also save as item</label>
+        </div>
+
         <!-- Buttons -->
         <div class="flex gap-3 pt-4 border-t border-slate-100">
           <button type="submit" :disabled="isSubmitting" class="flex-1 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:bg-blue-400 text-white font-semibold py-2.5 rounded-xl transition text-sm shadow-md shadow-blue-500/10 flex items-center justify-center gap-2">
@@ -149,6 +155,8 @@ const incomeAmount = ref(null)
 const incomeCategoryId = ref(null)
 const incomeCategoryInput = ref('')
 const incomeCategoryFocused = ref(false)
+
+const saveAsItem = ref(false)
 
 const items = ref([
   {
@@ -287,7 +295,7 @@ async function selectOrCreateIncomeCategory() {
 watch(() => props.transaction, (newVal) => {
   date.value = newVal.date?.substring(0, 10) || ''
   locationId.value = newVal.location_id || null
-  const loc = newVal.location_id ? store.locations.find(l => l.id === newVal.location_id) : null
+  const loc = newVal.location_id ? store.locations.find(l => String(l.id) === String(newVal.location_id)) : null
   locationInput.value = loc?.name || ''
   accountId.value = newVal.account_id || null
   txType.value = newVal.type || 'expense'
@@ -359,6 +367,18 @@ async function submit() {
             amount: Number(item.amount),
             account_id: accountId.value || null,
             type: 'expense',
+          })
+        }
+      }
+      if (saveAsItem.value) {
+        for (const item of items.value) {
+          await store.addItem({
+            name: item.description,
+            location_id: locationId.value || null,
+            date: date.value,
+            qty: 1,
+            unit: 'pcs',
+            price: Number(item.amount)
           })
         }
       }

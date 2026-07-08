@@ -275,6 +275,12 @@
           </div>
         </template>
 
+        <!-- Save as Item checkbox -->
+        <div v-if="txType === 'expense'" class="flex items-center gap-2 pt-2">
+          <input type="checkbox" id="saveAsItem" v-model="saveAsItem" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4" />
+          <label for="saveAsItem" class="text-sm font-semibold text-slate-600 cursor-pointer select-none">Also save as item</label>
+        </div>
+
         <!-- Buttons -->
         <div class="flex gap-3 pt-4 border-t border-slate-100">
           <button
@@ -324,6 +330,8 @@ const incomeAmount = ref(null)
 const incomeCategoryId = ref(null)
 const incomeCategoryInput = ref('')
 const incomeCategoryFocused = ref(false)
+
+const saveAsItem = ref(false)
 
 const items = ref([
   {
@@ -532,6 +540,18 @@ async function submit() {
           account_id: accountId.value || null,
           type: 'expense'
         })
+      }
+      if (saveAsItem.value) {
+        for (const item of items.value) {
+          await store.addItem({
+            name: item.description,
+            location_id: locationId.value || null,
+            date: date.value,
+            qty: 1,
+            unit: 'pcs',
+            price: Number(item.amount)
+          })
+        }
       }
     } else {
       if (!incomeCategoryId.value && incomeCategoryInput.value.trim()) {

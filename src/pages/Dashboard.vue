@@ -636,6 +636,16 @@
       </div>
     </div>
 
+    <!-- Monthly Income vs Expense Chart -->
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 transition hover:shadow-md duration-300">
+      <h2 class="text-base sm:text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+        <span class="text-emerald-500 font-extrabold">📊</span> Monthly Income vs Expense
+      </h2>
+      <div class="w-full min-h-[250px] flex items-center justify-center">
+        <MonthlyTrendChart :data="store.groupedByMonth" />
+      </div>
+    </div>
+
     <!-- Daily Spending Line Chart -->
     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 transition hover:shadow-md duration-300">
       <h2 class="text-base sm:text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
@@ -643,6 +653,16 @@
       </h2>
       <div class="w-full min-h-[250px] flex items-center justify-center">
         <DailyTrendChart :data="store.groupedByDay" />
+      </div>
+    </div>
+
+    <!-- Hourly Spending Bar Chart -->
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 transition hover:shadow-md duration-300">
+      <h2 class="text-base sm:text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+        <span class="text-purple-500 font-extrabold">🕐</span> Spending by Hour
+      </h2>
+      <div class="w-full min-h-[250px] flex items-center justify-center">
+        <HourlyChart :data="store.groupedByHour" />
       </div>
     </div>
 
@@ -656,6 +676,8 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTransactionStore } from '../stores/transactionStore'
 import DailyTrendChart from '../components/DailyTrendChart.vue'
+import MonthlyTrendChart from '../components/MonthlyTrendChart.vue'
+import HourlyChart from '../components/HourlyChart.vue'
 import MonthlyChart from '../components/MonthlyChart.vue'
 import CategoryChart from '../components/CategoryChart.vue'
 import AddTransactionModal from '../components/AddTransactionModal.vue'

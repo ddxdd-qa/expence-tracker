@@ -111,7 +111,7 @@ const itemComparisons = computed(() => {
         locations: {}
       }
     }
-    const locName = store.locations.find(l => l.id === t.location_id)?.name || 'Unknown'
+    const locName = store.locations.find(l => String(l.id) === String(t.location_id))?.name || 'Unknown'
     if (!items[descLower].locations[locName]) {
       items[descLower].locations[locName] = []
     }

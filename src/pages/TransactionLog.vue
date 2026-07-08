@@ -43,6 +43,44 @@
       >Income</button>
     </div>
 
+    <!-- Date Filter -->
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div>
+          <h2 class="text-sm font-bold text-slate-900">Date Range</h2>
+          <p class="text-xs text-slate-400">{{ store.filteredTransactions.length }} of {{ store.transactions.length }} shown</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button @click="setWeekRange"
+            class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200"
+            :class="isWeekSelected ? 'bg-blue-50 border-blue-200 text-blue-600 shadow-sm' : 'bg-slate-50 border-slate-200/80 text-slate-600 hover:bg-slate-100'"
+          >Last 7 Days</button>
+          <button @click="setMonthRange"
+            class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200"
+            :class="isMonthSelected ? 'bg-blue-50 border-blue-200 text-blue-600 shadow-sm' : 'bg-slate-50 border-slate-200/80 text-slate-600 hover:bg-slate-100'"
+          >This Month</button>
+          <button @click="setAllRange"
+            class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200"
+            :class="!isWeekSelected && !isMonthSelected ? 'bg-blue-50 border-blue-200 text-blue-600 shadow-sm' : 'bg-slate-50 border-slate-200/80 text-slate-600 hover:bg-slate-100'"
+          >All Time</button>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 pt-3 border-t border-slate-100">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">From</label>
+          <input v-model="filterFrom" type="date"
+            class="appearance-none w-full bg-slate-50 border border-slate-200/80 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-700 outline-none transition-all duration-200"
+          />
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">To</label>
+          <input v-model="filterTo" type="date"
+            class="appearance-none w-full bg-slate-50 border border-slate-200/80 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-700 outline-none transition-all duration-200"
+          />
+        </div>
+      </div>
+    </div>
+
     <!-- Empty State -->
     <div v-if="filteredByType.length === 0" class="bg-white rounded-2xl border border-slate-100 p-12 text-center shadow-sm">
       <div class="text-5xl mb-4">📝</div>
@@ -200,6 +238,42 @@ const editingTransaction = ref(null)
 const isDeletingTransactionId = ref(null)
 const typeFilter = ref('all')
 
+// ponytail: toLocaleDateString('en-CA') returns YYYY-MM-DD in local timezone, avoids UTC off-by-one
+function toLocalDate(d) { return d.toLocaleDateString('en-CA') }
+const filterFrom = ref(toLocalDate(new Date(new Date().getFullYear(), new Date().getMonth(), 1)))
+const filterTo = ref(toLocalDate(new Date()))
+const isWeekSelected = ref(false)
+const isMonthSelected = ref(true)
+
+function setWeekRange() {
+  isWeekSelected.value = true
+  isMonthSelected.value = false
+  const today = new Date()
+  const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
+  filterFrom.value = toLocalDate(weekAgo)
+  filterTo.value = toLocalDate(today)
+}
+
+function setMonthRange() {
+  isWeekSelected.value = false
+  isMonthSelected.value = true
+  const today = new Date()
+  filterFrom.value = toLocalDate(new Date(today.getFullYear(), today.getMonth(), 1))
+  filterTo.value = toLocalDate(today)
+}
+
+function setAllRange() {
+  isWeekSelected.value = false
+  isMonthSelected.value = false
+  const today = new Date()
+  filterFrom.value = '2000-01-01'
+  filterTo.value = toLocalDate(today)
+}
+
+watch([filterFrom, filterTo], () => {
+  store.setDateFilter(new Date(filterFrom.value), new Date(filterTo.value))
+})
+
 const accountFilter = computed(() => {
   const q = route.query.account
   return q ? Number(q) : null
@@ -229,7 +303,7 @@ function formatCurrency(value) {
 }
 
 function getLocationName(locationId) {
-  const location = store.locations.find(l => l.id === locationId)
+  const location = store.locations.find(l => String(l.id) === String(locationId))
   return location?.name || 'Unknown'
 }
 
